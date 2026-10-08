@@ -1,0 +1,4 @@
+.git
+*.psd
+mysql
+docker/db
