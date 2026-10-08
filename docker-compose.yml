@@ -1,0 +1,39 @@
+name: university-ticket-van
+
+services:
+  db:
+    build: docker/db
+    command:
+      - --character-set-server=utf8
+      - --collation-server=utf8_general_ci
+      - --sql-mode=NO_ENGINE_SUBSTITUTION
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ticket_van
+      MYSQL_USER: vhost
+      MYSQL_PASSWORD: "123456"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # the app connects to "localhost", so share the MySQL unix socket with web
+      - mysqld-socket:/var/run/mysqld
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    ports:
+      - "${WEB_PORT:-8083}:80"
+    volumes:
+      - mysqld-socket:/var/run/mysqld
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  mysqld-socket:
